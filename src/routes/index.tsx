@@ -133,16 +133,10 @@ function CadencePlayer() {
       {/* BPM display + visualizer */}
       <section className="relative flex flex-col items-center rounded-3xl bg-surface px-4 pt-8 pb-6">
         <div className="relative mb-6 flex size-32 items-center justify-center" style={beatStyle}>
-          {playing && (
-            <>
-              <span className="animate-ring absolute inset-0 rounded-full border-4 border-primary" />
-              <span className="animate-ring absolute inset-0 rounded-full border-4 border-primary [animation-delay:calc(var(--beat-duration)/2)]" />
-            </>
-          )}
           <span
             className={cn(
-              "relative size-24 rounded-full bg-primary transition-shadow",
-              playing ? "animate-beat glow-primary" : "opacity-60",
+              "relative size-12 rounded-full bg-foreground",
+              playing ? "animate-beat" : "opacity-60",
             )}
           />
         </div>
