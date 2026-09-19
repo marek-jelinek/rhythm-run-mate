@@ -35,6 +35,10 @@ type Track = {
 };
 
 const TRACKS = [
+  { id: "pop", name: "Pop", wave: "square", freq: 880 },
+  { id: "club", name: "Club", wave: "sawtooth", freq: 660 },
+  { id: "wood", name: "Wood", wave: "triangle", freq: 1040 },
+  { id: "soft", name: "Soft", wave: "sine", freq: 760 },
 ] as const satisfies readonly Track[];
 const DEFAULT_TRACK: Track = TRACKS[0];
 
