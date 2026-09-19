@@ -141,17 +141,6 @@ function CadencePlayer() {
           />
         </div>
 
-        <div className="flex gap-2">
-          {[0, 1, 2, 3].map((i) => (
-            <span
-              key={i}
-              className={cn(
-                "h-1.5 w-8 rounded-full transition-colors",
-                playing && beatIndex === (i + 1) % 4 ? "bg-primary" : "bg-surface-raised",
-              )}
-            />
-          ))}
-        </div>
 
         <div className="font-display tabular mt-4 text-[7.5rem] leading-none font-black tracking-tight">
           {bpm}
