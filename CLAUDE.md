@@ -83,7 +83,11 @@ their target pace — an alternative to a plain metronome.
   ```
   BPM (tempo) is always a separate, runtime setting — never baked into
   the samples or the pattern definition.
-- **Hosting:** Cloudflare Pages.
+- **Hosting:** Cloudflare Workers (decided 19. 9. 2026, instead of Pages:
+  the Lovable project already builds for Workers; same free tier and
+  https). Live at https://kilometronom.marker-b63.workers.dev (test page:
+  `/engine-test`). Deploy from the Mac, no GitHub needed:
+  `npm run build && npx wrangler deploy --config .output/server/wrangler.json --name kilometronom`
 - **Offline support (PWA):** yes, scoped specifically to offline loading
   and installability (caching the app and sound files). Screen-off
   playback is handled by the audio engine, not by the PWA — see below.
@@ -126,7 +130,7 @@ their target pace — an alternative to a plain metronome.
 - [ ] App still works after reloading offline (PWA)
 - [ ] Beat keeps playing for at least 5 minutes with the screen locked
       on a real iPhone (Safari) and Android phone (Chrome)
-- [ ] Deployed on Cloudflare Pages and testable on a real iPhone in
+- [ ] Deployed on Cloudflare Workers and testable on a real iPhone in
       Safari
 
 ## Open items to confirm before build starts
