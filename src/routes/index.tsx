@@ -1,24 +1,277 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { Minus, Plus, Play, Square, Volume2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Running Cadence Player" },
+      {
+        name: "description",
+        content: "Keep a steady running rhythm with a looping beat from 160 to 190 BPM.",
+      },
+      { property: "og:title", content: "Running Cadence Player" },
+      {
+        property: "og:description",
+        content: "A musical metronome for runners. Pick your tempo, pick your track, run.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: CadencePlayer,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+const BPM_MIN = 160;
+const BPM_MAX = 190;
+const BPM_STEP = 5;
+
+type Track = {
+  id: string;
+  name: string;
+  wave: OscillatorType;
+  freq: number;
+  accentFreq: number;
+};
+
+const TRACKS: Track[] = [
+  { id: "pop", name: "Pop", wave: "sine", freq: 880, accentFreq: 1320 },
+  { id: "rock", name: "Rock", wave: "square", freq: 220, accentFreq: 330 },
+  { id: "metal", name: "Metal", wave: "sawtooth", freq: 110, accentFreq: 165 },
+  { id: "jazz", name: "Jazz", wave: "triangle", freq: 440, accentFreq: 660 },
+  { id: "electro", name: "Electro", wave: "square", freq: 660, accentFreq: 990 },
+];
+
+function CadencePlayer() {
+  const [bpm, setBpm] = useState(175);
+  const [playing, setPlaying] = useState(false);
+  const [trackId, setTrackId] = useState("pop");
+  const [volume, setVolume] = useState(70);
+  const [beatIndex, setBeatIndex] = useState(0);
+
+  const ctxRef = useRef<AudioContext | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const trackRef = useRef<Track>(TRACKS[0]);
+  const countRef = useRef(0);
+
+  trackRef.current = TRACKS.find((t) => t.id === trackId) ?? TRACKS[0];
+
+  // keep volume in sync
+  useEffect(() => {
+    if (gainRef.current) gainRef.current.gain.value = volume / 100;
+  }, [volume]);
+
+  // beat scheduler
+  useEffect(() => {
+    if (!playing) return;
+    const ctx = ctxRef.current;
+    if (!ctx) return;
+
+    const interval = 60000 / bpm;
+    const tick = () => {
+      const t = trackRef.current;
+      const accent = countRef.current % 4 === 0;
+      const osc = ctx.createOscillator();
+      const env = ctx.createGain();
+      osc.type = t.wave;
+      osc.frequency.value = accent ? t.accentFreq : t.freq;
+      const now = ctx.currentTime;
+      env.gain.setValueAtTime(accent ? 1 : 0.6, now);
+      env.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.connect(env).connect(gainRef.current!);
+      osc.start(now);
+      osc.stop(now + 0.13);
+      countRef.current += 1;
+      setBeatIndex(countRef.current % 4);
+    };
+
+    tick();
+    const id = window.setInterval(tick, interval);
+    return () => window.clearInterval(id);
+  }, [playing, bpm]);
+
+  const togglePlay = () => {
+    if (!playing) {
+      if (!ctxRef.current) {
+        const ctx = new AudioContext();
+        const gain = ctx.createGain();
+        gain.gain.value = volume / 100;
+        gain.connect(ctx.destination);
+        ctxRef.current = ctx;
+        gainRef.current = gain;
+      }
+      void ctxRef.current.resume();
+      countRef.current = 0;
+      setPlaying(true);
+    } else {
+      setPlaying(false);
+      setBeatIndex(0);
+    }
+  };
+
+  const step = (dir: 1 | -1) =>
+    setBpm((b) => Math.min(BPM_MAX, Math.max(BPM_MIN, b + dir * BPM_STEP)));
+
+  const beatStyle = { "--beat-duration": `${60 / bpm}s` } as CSSProperties;
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-5 px-5 pt-6 pb-8">
+      {/* Header */}
+      <header className="flex items-center justify-between">
+        <h1 className="font-display text-xl font-extrabold tracking-[0.2em] uppercase">
+          Cadence
+        </h1>
+        <span
+          className={cn(
+            "font-display rounded-full px-3 py-1 text-xs font-bold tracking-widest uppercase",
+            playing ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground",
+          )}
+        >
+          {playing ? "Running" : "Ready"}
+        </span>
+      </header>
+
+      {/* BPM display + visualizer */}
+      <section className="relative flex flex-col items-center rounded-3xl bg-surface px-4 pt-8 pb-6">
+        <div className="relative mb-6 flex size-32 items-center justify-center" style={beatStyle}>
+          {playing && (
+            <>
+              <span className="animate-ring absolute inset-0 rounded-full border-4 border-primary" />
+              <span className="animate-ring absolute inset-0 rounded-full border-4 border-primary [animation-delay:calc(var(--beat-duration)/2)]" />
+            </>
+          )}
+          <span
+            className={cn(
+              "relative size-24 rounded-full bg-primary transition-shadow",
+              playing ? "animate-beat glow-primary" : "opacity-60",
+            )}
+          />
+        </div>
+
+        <div className="flex gap-2">
+          {[0, 1, 2, 3].map((i) => (
+            <span
+              key={i}
+              className={cn(
+                "h-1.5 w-8 rounded-full transition-colors",
+                playing && beatIndex === (i + 1) % 4 ? "bg-primary" : "bg-surface-raised",
+              )}
+            />
+          ))}
+        </div>
+
+        <div className="font-display tabular mt-4 text-[7.5rem] leading-none font-black tracking-tight">
+          {bpm}
+        </div>
+        <div className="font-display text-sm font-bold tracking-[0.35em] text-muted-foreground uppercase">
+          Steps / min
+        </div>
+      </section>
+
+      {/* BPM controls */}
+      <section className="grid grid-cols-2 gap-3">
+        <StepButton onClick={() => step(-1)} disabled={bpm <= BPM_MIN} label="Decrease tempo">
+          <Minus className="size-9" strokeWidth={3} />
+        </StepButton>
+        <StepButton onClick={() => step(1)} disabled={bpm >= BPM_MAX} label="Increase tempo">
+          <Plus className="size-9" strokeWidth={3} />
+        </StepButton>
+      </section>
+
+      {/* Play / Stop */}
+      <button
+        type="button"
+        onClick={togglePlay}
+        aria-pressed={playing}
+        className={cn(
+          "font-display flex h-24 w-full items-center justify-center gap-3 rounded-3xl text-3xl font-black tracking-[0.25em] uppercase transition-transform active:scale-[0.97]",
+          playing
+            ? "bg-secondary text-foreground ring-2 ring-primary"
+            : "bg-accent text-accent-foreground shadow-[0_10px_40px_-10px_var(--accent)]",
+        )}
+      >
+        {playing ? (
+          <>
+            <Square className="size-8 fill-current" /> Stop
+          </>
+        ) : (
+          <>
+            <Play className="size-8 fill-current" /> Play
+          </>
+        )}
+      </button>
+
+      {/* Track selector */}
+      <section className="flex flex-col gap-2">
+        <h2 className="font-display text-xs font-bold tracking-[0.3em] text-muted-foreground uppercase">
+          Track
+        </h2>
+        <div className="grid grid-cols-5 gap-2">
+          {TRACKS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTrackId(t.id)}
+              aria-pressed={trackId === t.id}
+              className={cn(
+                "font-display h-14 rounded-xl text-sm font-extrabold tracking-wide uppercase transition-colors",
+                trackId === t.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-surface text-muted-foreground active:bg-surface-raised",
+              )}
+            >
+              {t.name}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Volume */}
+      <section className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-xs font-bold tracking-[0.3em] text-muted-foreground uppercase">
+            Volume
+          </h2>
+          <span className="font-display tabular text-lg font-extrabold">{volume}</span>
+        </div>
+        <div className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3">
+          <Volume2 className="size-6 shrink-0 text-muted-foreground" />
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={volume}
+            onChange={(e) => setVolume(Number(e.target.value))}
+            aria-label="Volume"
+            className="h-3 w-full cursor-pointer accent-primary"
+          />
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function StepButton({
+  children,
+  onClick,
+  disabled,
+  label,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled: boolean;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      className="flex h-20 items-center justify-center rounded-2xl bg-surface-raised text-foreground transition-transform active:scale-95 disabled:opacity-30"
     >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+      {children}
+    </button>
   );
 }
