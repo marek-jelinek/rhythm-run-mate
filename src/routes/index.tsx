@@ -120,14 +120,6 @@ function CadencePlayer() {
         <h1 className="font-display text-xl font-extrabold tracking-[0.2em] uppercase">
           Cadence
         </h1>
-        <span
-          className={cn(
-            "font-display rounded-full px-3 py-1 text-xs font-bold tracking-widest uppercase",
-            playing ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground",
-          )}
-        >
-          {playing ? "Running" : "Ready"}
-        </span>
       </header>
 
       {/* BPM display + visualizer */}
