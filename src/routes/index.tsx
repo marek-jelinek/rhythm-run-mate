@@ -35,13 +35,14 @@ type Track = {
   accentFreq: number;
 };
 
-const TRACKS: Track[] = [
+const TRACKS = [
   { id: "pop", name: "Pop", wave: "sine", freq: 880, accentFreq: 1320 },
   { id: "rock", name: "Rock", wave: "square", freq: 220, accentFreq: 330 },
   { id: "metal", name: "Metal", wave: "sawtooth", freq: 110, accentFreq: 165 },
   { id: "jazz", name: "Jazz", wave: "triangle", freq: 440, accentFreq: 660 },
   { id: "electro", name: "Electro", wave: "square", freq: 660, accentFreq: 990 },
-];
+] as const satisfies readonly Track[];
+const DEFAULT_TRACK: Track = TRACKS[0];
 
 function CadencePlayer() {
   const [bpm, setBpm] = useState(175);
@@ -52,10 +53,10 @@ function CadencePlayer() {
 
   const ctxRef = useRef<AudioContext | null>(null);
   const gainRef = useRef<GainNode | null>(null);
-  const trackRef = useRef<Track>(TRACKS[0]);
+  const trackRef = useRef<Track>(DEFAULT_TRACK);
   const countRef = useRef(0);
 
-  trackRef.current = TRACKS.find((t) => t.id === trackId) ?? TRACKS[0];
+  trackRef.current = TRACKS.find((t) => t.id === trackId) ?? DEFAULT_TRACK;
 
   // keep volume in sync
   useEffect(() => {
