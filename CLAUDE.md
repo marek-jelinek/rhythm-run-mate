@@ -34,12 +34,18 @@ their target pace — an alternative to a plain metronome.
 - **Audio engine:** Web Audio API, kept in its own module, separate from
   the UI (plain TypeScript, no React inside). Instead of scheduling beat by
   beat, the engine renders one full loop of the pattern at the current BPM
-  into an audio buffer ahead of time (`OfflineAudioContext`) and plays it
+  into an audio buffer ahead of time (samples mixed in code, so the math
+  is unit-testable without a browser) and plays it
   on repeat (`AudioBufferSourceNode` with `loop = true`). Beat positions
   are sample-exact, and nothing depends on `setInterval`/`setTimeout`,
   which drift and get paused by the phone when the screen is off. BPM and
   track changes re-render the loop and switch over on the next beat, so
   the rhythm never stumbles.
+  Code lives in `src/audio/` (engine, loop mixing, timing math, patterns,
+  placeholder sounds). The UI only talks to the engine through its public
+  methods (start, stop, setBpm, setPattern, setVolume, getPosition).
+  A hidden test page `/engine-test` exercises the engine without the real
+  UI; unit tests (Vitest) check that every beat lands on the exact sample.
 - **Visual sync:** the pulsing circle's animation must read its timing
   from the same audio clock (`AudioContext.currentTime`) the scheduler
   uses — via `requestAnimationFrame` computing where in the loop the
@@ -132,5 +138,16 @@ their target pace — an alternative to a plain metronome.
   separate branch and goes to `main` only when it works, because
   everything on `main` syncs back into Lovable.
 - Where the WAV samples for the 5 tracks come from (free sample packs,
-  bought, or made by someone). Until then the engine uses generated
-  placeholder sounds.
+  bought, or made by someone). Decided 19. 9. 2026: solved after the
+  engine is done. Until then the engine uses placeholder drum sounds
+  generated in code; loading `manifest.json` + WAV files is added when
+  the samples exist.
+
+## Working rules
+- **Audio changes are verified by measuring real playback**, not only by
+  unit tests. After any change to the engine, record its actual output
+  in the browser (e.g. via the `/engine-test` page and `window.__engine`
+  in dev) and measure beat intervals across loop wraps and BPM/track
+  switches. Reason: the unit tests passed while a Chromium looping bug
+  (see `loopSafeLength` in `src/audio/cadence.ts`) broke the rhythm after
+  the first loop — only a recording caught it.
