@@ -30,13 +30,16 @@ const H = "hat";
 const O = "openhat";
 const C = "clap";
 const R = "ride";
+const T = "tick";
+const TA = "tickAccent";
 
 export const PLACEHOLDER_PATTERNS: readonly Pattern[] = [
   {
     id: "pop",
     name: "Pop",
-    stepsPerBeat: 2,
-    sequence: [[K, H], H, [S, H], H, [K, H], [K, H], [S, H], H],
+    // Classic metronome: a tick on every step, higher tick on the first.
+    stepsPerBeat: 1,
+    sequence: [TA, T, T, T],
   },
   {
     id: "rock",

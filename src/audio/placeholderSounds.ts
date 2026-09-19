@@ -63,6 +63,11 @@ function clap(sr: number) {
   });
 }
 
+/** Short woodblock-like tick, as on a classic metronome. */
+function tick(sr: number, freq: number, gain: number) {
+  return render(sr, 0.04, (t) => gain * Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 120));
+}
+
 export function placeholderSamples(sampleRate: number): SampleBank {
   return {
     kick: [kick(sampleRate)],
@@ -71,5 +76,7 @@ export function placeholderSamples(sampleRate: number): SampleBank {
     openhat: [metallic(sampleRate, 0.25, 14, 0.2, 4)],
     ride: [metallic(sampleRate, 0.4, 9, 0.15, 5)],
     clap: [clap(sampleRate)],
+    tick: [tick(sampleRate, 1000, 0.6)],
+    tickAccent: [tick(sampleRate, 1500, 0.8)],
   };
 }

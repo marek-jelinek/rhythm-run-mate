@@ -11,6 +11,7 @@ const SWITCH_LEAD = 0.03;
 /** Short fades that stop clicks when a loop is cut off. */
 const SWITCH_FADE = 0.004;
 const STOP_FADE = 0.03;
+const VOLUME_RAMP = 0.03;
 /** Mixed loops kept in memory (5 tracks × 7 tempos would be 35). */
 const LOOP_CACHE_SIZE = 12;
 
@@ -118,8 +119,14 @@ export class CadenceEngine {
   setVolume(volume: number): void {
     this._volume = Math.min(1, Math.max(0, volume));
     if (this.ctx && this.master) {
-      // Smooth change, avoids crackle while dragging a slider.
-      this.master.gain.setTargetAtTime(this._volume, this.ctx.currentTime, 0.015);
+      // Short ramp avoids crackle while dragging a slider. A plain linear
+      // ramp from a pinned start value, because Safari handles
+      // setTargetAtTime unreliably.
+      const gain = this.master.gain;
+      const now = this.ctx.currentTime;
+      gain.cancelScheduledValues(now);
+      gain.setValueAtTime(gain.value, now);
+      gain.linearRampToValueAtTime(this._volume, now + VOLUME_RAMP);
     }
   }
 
