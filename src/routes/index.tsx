@@ -160,7 +160,7 @@ function CadencePlayer() {
         className={cn(
           "font-display flex h-24 w-full items-center justify-center gap-3 rounded-3xl text-3xl font-black tracking-[0.25em] uppercase transition-transform active:scale-[0.97]",
           playing
-            ? "bg-secondary text-foreground ring-2 ring-primary"
+            ? "bg-secondary text-accent ring-2 ring-accent"
             : "bg-accent text-accent-foreground shadow-[0_10px_40px_-10px_var(--accent)]",
         )}
       >
