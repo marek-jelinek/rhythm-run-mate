@@ -102,8 +102,9 @@ their target pace — an alternative to a plain metronome.
   3. Media Session API: shows play/stop on the lock screen.
   4. Fallback if a device still stops the sound: a "keep screen on"
      option (Screen Wake Lock API).
-  This must be verified on a real iPhone (Safari) and Android (Chrome)
-  early, right after the audio engine works — it is the highest-risk
+  Verified 19. 9. 2026: plays with the screen locked on a real iPhone
+  (Safari, `/engine-test` page). Still to verify: Android (Chrome).
+  Originally planned as a check right after the audio engine works — it is the highest-risk
   part of the prototype. A native iOS app stays out of scope unless the
   web approach proves unreliable.
 - **Analytics:** lightweight event tracking (PostHog recommended), just
