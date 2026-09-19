@@ -129,7 +129,7 @@ their target pace — an alternative to a plain metronome.
 - [ ] Session-length and track-switch events appear correctly in
       analytics
 - [ ] App still works after reloading offline (PWA)
-- [x] Beat keeps playing with the screen locked
+- [ ] Beat keeps playing for at least 5 minutes with the screen locked
       on a real iPhone (Safari) and Android phone (Chrome)
 - [ ] Deployed on Cloudflare Workers and testable on a real iPhone in
       Safari
