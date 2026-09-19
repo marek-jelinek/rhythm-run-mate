@@ -72,13 +72,12 @@ function CadencePlayer() {
     const interval = 60000 / bpm;
     const tick = () => {
       const t = trackRef.current;
-      const accent = countRef.current % 4 === 0;
       const osc = ctx.createOscillator();
       const env = ctx.createGain();
       osc.type = t.wave;
-      osc.frequency.value = accent ? t.accentFreq : t.freq;
+      osc.frequency.value = t.freq;
       const now = ctx.currentTime;
-      env.gain.setValueAtTime(accent ? 1 : 0.6, now);
+      env.gain.setValueAtTime(0.8, now);
       env.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
       osc.connect(env).connect(gainRef.current!);
       osc.start(now);
