@@ -32,15 +32,9 @@ type Track = {
   name: string;
   wave: OscillatorType;
   freq: number;
-  accentFreq: number;
 };
 
 const TRACKS = [
-  { id: "pop", name: "Pop", wave: "sine", freq: 880, accentFreq: 1320 },
-  { id: "rock", name: "Rock", wave: "square", freq: 220, accentFreq: 330 },
-  { id: "metal", name: "Metal", wave: "sawtooth", freq: 110, accentFreq: 165 },
-  { id: "jazz", name: "Jazz", wave: "triangle", freq: 440, accentFreq: 660 },
-  { id: "electro", name: "Electro", wave: "square", freq: 660, accentFreq: 990 },
 ] as const satisfies readonly Track[];
 const DEFAULT_TRACK: Track = TRACKS[0];
 
@@ -72,13 +66,12 @@ function CadencePlayer() {
     const interval = 60000 / bpm;
     const tick = () => {
       const t = trackRef.current;
-      const accent = countRef.current % 4 === 0;
       const osc = ctx.createOscillator();
       const env = ctx.createGain();
       osc.type = t.wave;
-      osc.frequency.value = accent ? t.accentFreq : t.freq;
+      osc.frequency.value = t.freq;
       const now = ctx.currentTime;
-      env.gain.setValueAtTime(accent ? 1 : 0.6, now);
+      env.gain.setValueAtTime(0.8, now);
       env.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
       osc.connect(env).connect(gainRef.current!);
       osc.start(now);
