@@ -24,8 +24,8 @@ their target pace — an alternative to a plain metronome.
   track/rhythm must NOT change or reset the current BPM.
 - **Rhythm visualization** — an animated element (e.g. a pulsing circle)
   that visually matches the beat exactly, with no drift over time.
-- **Track selector** — 5 tracks, styled after music genres: Pop, Rock,
-  Metal, Jazz, Electro.
+- **Track selector** — 5 tracks, styled after music genres: Basic, Electro,
+  Rock, Punk, Metal.
 - **Volume control** — slider or +/- control.
 
 ## Architecture decisions
@@ -59,12 +59,12 @@ their target pace — an alternative to a plain metronome.
   /public/sounds/
     manifest.json
     patterns/
-      pop/
+      basic/
         kick.wav
         hihat.wav
       rock/
       metal/
-      jazz/
+      punk/
       electro/
   ```
   `manifest.json` maps each pattern to its display name, its sample
@@ -73,9 +73,9 @@ their target pace — an alternative to a plain metronome.
   {
     "patterns": [
       {
-        "id": "pop",
-        "name": "Pop",
-        "samples": { "kick": "patterns/pop/kick.wav", "hihat": "patterns/pop/hihat.wav" },
+        "id": "basic",
+        "name": "Basic",
+        "samples": { "kick": "patterns/basic/kick.wav", "hihat": "patterns/basic/hihat.wav" },
         "sequence": ["kick", "hihat", "kick", "hihat"]
       }
     ]

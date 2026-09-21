@@ -62,11 +62,11 @@ describe("mixLoop", () => {
 describe("placeholder tracks", () => {
   it("has the 5 genres from the spec, all playable", () => {
     expect(PLACEHOLDER_PATTERNS.map((p) => p.name)).toEqual([
-      "Pop",
-      "Rock",
-      "Metal",
-      "Jazz",
+      "Basic",
       "Electro",
+      "Rock",
+      "Punk",
+      "Metal",
     ]);
     const samples = placeholderSamples(SR);
     for (const p of PLACEHOLDER_PATTERNS) {

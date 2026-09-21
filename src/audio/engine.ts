@@ -5,22 +5,16 @@ import { placeholderSamples } from "./placeholderSounds";
 import { nextBeatAfter, positionAt, loopOffset, type Segment } from "./timeline";
 
 /** Delay between pressing Play and the first beat, so the start is never clipped. */
-const START_DELAY = 0.15;
-/**
- * Minimum time needed to prepare a BPM/track switch before the beat it lands
- * on. Generous enough to mix the long Electro build (tens of milliseconds, more
- * on a slow phone) without missing the beat; if the press lands inside this
- * window the switch simply happens one beat later.
- */
-const SWITCH_LEAD = 0.12;
+const START_DELAY = 0.06;
+/** Minimum time needed to prepare a BPM/track switch before the beat it lands on. */
+const SWITCH_LEAD = 0.03;
 /** Short fades that stop clicks when a loop is cut off. */
 const SWITCH_FADE = 0.004;
 const STOP_FADE = 0.03;
 const VOLUME_RAMP = 0.03;
 /**
  * How much mixed audio to keep in memory, in seconds. A budget rather than a
- * count of loops, because the Electro build is about a minute long while the
- * other tracks are one bar.
+ * count of loops, so a long pattern can never fill memory with copies of itself.
  */
 const LOOP_CACHE_SECONDS = 180;
 
