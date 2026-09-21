@@ -37,6 +37,22 @@ function snare(sr: number) {
   );
 }
 
+/** Quiet, short snare, for the in-between ghost notes of a breakbeat. */
+function ghost(sr: number) {
+  const n = noise(13);
+  return render(sr, 0.08, (t) => 0.13 * n() * Math.exp(-t * 55));
+}
+
+/** Long low sine — the sub-bass weight under a drum and bass kick. */
+function sub(sr: number) {
+  let phase = 0;
+  return render(sr, 0.4, (t) => {
+    const freq = 46 + 18 * Math.exp(-t * 20);
+    phase += (2 * Math.PI * freq) / sr;
+    return 0.22 * Math.sin(phase) * Math.exp(-t * 7);
+  });
+}
+
 /** Noise with the low end removed (a one-pole high-pass), for cymbals. */
 function metallic(sr: number, seconds: number, decay: number, gain: number, seed: number) {
   const n = noise(seed);
@@ -63,6 +79,26 @@ function clap(sr: number) {
   });
 }
 
+/**
+ * Plain acoustic-style drum: a short beater click on top of a body that drops
+ * in pitch the way a real drum head does. No tuning differences between hits —
+ * every stroke sounds the same.
+ */
+function drum(sr: number) {
+  const n = noise(11);
+  let phase = 0;
+  let lp = 0;
+  return render(sr, 0.35, (t) => {
+    const freq = 60 + 120 * Math.exp(-t * 55);
+    phase += (2 * Math.PI * freq) / sr;
+    const body = Math.sin(phase) * Math.exp(-t * 11);
+    // Beater click, softened by a one-pole low-pass so it thuds instead of hissing.
+    lp += 0.35 * (n() - lp);
+    const click = lp * Math.exp(-t * 220);
+    return 0.85 * body + 0.5 * click;
+  });
+}
+
 /** Short woodblock-like tick, as on a classic metronome. */
 function tick(sr: number, freq: number, gain: number) {
   return render(sr, 0.04, (t) => gain * Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 120));
@@ -71,7 +107,10 @@ function tick(sr: number, freq: number, gain: number) {
 export function placeholderSamples(sampleRate: number): SampleBank {
   return {
     kick: [kick(sampleRate)],
+    drum: [drum(sampleRate)],
     snare: [snare(sampleRate)],
+    ghost: [ghost(sampleRate)],
+    sub: [sub(sampleRate)],
     hat: [metallic(sampleRate, 0.06, 70, 0.25, 3)],
     openhat: [metallic(sampleRate, 0.25, 14, 0.2, 4)],
     ride: [metallic(sampleRate, 0.4, 9, 0.15, 5)],

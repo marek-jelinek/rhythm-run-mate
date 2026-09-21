@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mixLoop, validatePattern, type SampleBank } from "./mix";
-import { PLACEHOLDER_PATTERNS, type Pattern } from "./patterns";
+import { PLACEHOLDER_PATTERNS, beatsInPattern, type Pattern } from "./patterns";
 import { placeholderSamples } from "./placeholderSounds";
 
 // 44100 Hz at 175 BPM: one beat = 15120 samples, easy to check by hand.
@@ -71,7 +71,9 @@ describe("placeholder tracks", () => {
     const samples = placeholderSamples(SR);
     for (const p of PLACEHOLDER_PATTERNS) {
       const loop = mixLoop(p, samples, BPM, SR);
-      expect(loop.beatOnsets).toHaveLength(4);
+      // One onset per beat. Most tracks are a single bar; Electro is a long
+      // build that adds a layer every few bars.
+      expect(loop.beatOnsets).toHaveLength(beatsInPattern(p));
       for (const ch of loop.channels)
         expect(ch.every((v) => Number.isFinite(v) && Math.abs(v) <= 0.9801)).toBe(true);
     }

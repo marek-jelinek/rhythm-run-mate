@@ -1,19 +1,28 @@
-import { BPM_DEFAULT, clampBpm } from "./cadence";
+import { BPM_DEFAULT, clampBpm, stepBpm } from "./cadence";
 import { mixLoop, type SampleBank } from "./mix";
 import type { Pattern } from "./patterns";
 import { placeholderSamples } from "./placeholderSounds";
 import { nextBeatAfter, positionAt, loopOffset, type Segment } from "./timeline";
 
 /** Delay between pressing Play and the first beat, so the start is never clipped. */
-const START_DELAY = 0.06;
-/** Minimum time needed to prepare a BPM/track switch before the beat it lands on. */
-const SWITCH_LEAD = 0.03;
+const START_DELAY = 0.15;
+/**
+ * Minimum time needed to prepare a BPM/track switch before the beat it lands
+ * on. Generous enough to mix the long Electro build (tens of milliseconds, more
+ * on a slow phone) without missing the beat; if the press lands inside this
+ * window the switch simply happens one beat later.
+ */
+const SWITCH_LEAD = 0.12;
 /** Short fades that stop clicks when a loop is cut off. */
 const SWITCH_FADE = 0.004;
 const STOP_FADE = 0.03;
 const VOLUME_RAMP = 0.03;
-/** Mixed loops kept in memory (5 tracks × 7 tempos would be 35). */
-const LOOP_CACHE_SIZE = 12;
+/**
+ * How much mixed audio to keep in memory, in seconds. A budget rather than a
+ * count of loops, because the Electro build is about a minute long while the
+ * other tracks are one bar.
+ */
+const LOOP_CACHE_SECONDS = 180;
 
 type PlayingSegment = Segment & {
   source: AudioBufferSourceNode;
@@ -57,6 +66,7 @@ export class CadenceEngine {
   private _bpm = BPM_DEFAULT;
   private _patternId: string;
   private _volume = 0.7;
+  private warmTimer: number | null = null;
 
   constructor(private readonly patterns: readonly Pattern[]) {
     if (patterns.length === 0) throw new Error("CadenceEngine needs at least one pattern");
@@ -152,6 +162,7 @@ export class CadenceEngine {
   /** Release the audio device. The engine can't be used afterwards. */
   async dispose(): Promise<void> {
     this.stop();
+    if (this.warmTimer !== null) clearTimeout(this.warmTimer);
     document.removeEventListener("visibilitychange", this.recover);
     await this.ctx?.close();
     this.ctx = null;
@@ -245,7 +256,36 @@ export class CadenceEngine {
     source.onended = () => gain.disconnect();
     source.start(time, loopOffset(seg));
 
+    this.warmNeighbours();
     return { ...seg, source, gain, patternId: pattern.id, bpm: this._bpm };
+  }
+
+  /**
+   * Mix the tempos on either side of the current one while nothing is waiting
+   * for them, so pressing +/- never has to mix a loop on the spot.
+   */
+  private warmNeighbours(): void {
+    if (this.warmTimer !== null) clearTimeout(this.warmTimer);
+    this.warmTimer = window.setTimeout(() => {
+      this.warmTimer = null;
+      if (!this.ctx) return;
+      const pattern = this.patterns.find((p) => p.id === this._patternId);
+      if (!pattern) return;
+      for (const bpm of [stepBpm(this._bpm, 1), stepBpm(this._bpm, -1)]) {
+        if (bpm !== this._bpm) this.loop(pattern, bpm);
+      }
+    }, 400);
+  }
+
+  /** Drop the least recently used loops until the cache fits its budget. */
+  private trimCache(): void {
+    let total = 0;
+    for (const l of this.loopCache.values()) total += l.buffer.duration;
+    for (const key of [...this.loopCache.keys()].slice(0, -1)) {
+      if (total <= LOOP_CACHE_SECONDS) break;
+      total -= this.loopCache.get(key)!.buffer.duration;
+      this.loopCache.delete(key);
+    }
   }
 
   private loop(pattern: Pattern, bpm: number): Loop {
@@ -258,7 +298,9 @@ export class CadenceEngine {
       this.loopCache.set(key, cached);
       return cached;
     }
-    const mixed = mixLoop(pattern, this.samples!, bpm, ctx.sampleRate);
+    // Mono: every sample is mono anyway, so a second channel would only
+    // double the memory of the long loops for identical sound.
+    const mixed = mixLoop(pattern, this.samples!, bpm, ctx.sampleRate, 1);
     const buffer = ctx.createBuffer(
       mixed.channels.length,
       mixed.channels[0]!.length,
@@ -267,9 +309,7 @@ export class CadenceEngine {
     mixed.channels.forEach((data, ch) => buffer.copyToChannel(data, ch));
     const loop = { buffer, beatOnsets: mixed.beatOnsets };
     this.loopCache.set(key, loop);
-    if (this.loopCache.size > LOOP_CACHE_SIZE) {
-      this.loopCache.delete(this.loopCache.keys().next().value!);
-    }
+    this.trimCache();
     return loop;
   }
 }
