@@ -24,19 +24,10 @@ export function stepSamples(step: Step): readonly string[] {
 
 // Placeholder patterns using the generated sounds in placeholderSounds.ts.
 // One beat = one running step, so these are written in 4-beat bars.
-// Some shorthands below name sounds no pattern currently uses — they stay so a
-// pattern can reach for them without hunting through the sample bank.
 const K = "kick";
 const S = "snare";
 const H = "hat";
-const O = "openhat";
-const C = "clap";
-const R = "ride";
 const D = "drum";
-const G = "ghost";
-const B = "sub";
-const T = "tick";
-const TA = "tickAccent";
 
 export const PLACEHOLDER_PATTERNS: readonly Pattern[] = [
   {

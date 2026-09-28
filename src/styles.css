@@ -67,33 +67,6 @@
   --color-accent-glow: var(--accent-glow);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
-  --animate-beat: beat var(--beat-duration, 0.35s) ease-out infinite;
-  --animate-ring: ring var(--beat-duration, 0.35s) ease-out infinite;
-
-  @keyframes beat {
-    0% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    15% {
-      transform: scale(1.18);
-      opacity: 1;
-    }
-    100% {
-      transform: scale(1);
-      opacity: 0.9;
-    }
-  }
-  @keyframes ring {
-    0% {
-      transform: scale(1);
-      opacity: 0.7;
-    }
-    100% {
-      transform: scale(1.7);
-      opacity: 0;
-    }
-  }
 }
 
 :root {

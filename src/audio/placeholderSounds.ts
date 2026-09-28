@@ -37,22 +37,6 @@ function snare(sr: number) {
   );
 }
 
-/** Quiet, short snare, for the in-between ghost notes of a breakbeat. */
-function ghost(sr: number) {
-  const n = noise(13);
-  return render(sr, 0.08, (t) => 0.13 * n() * Math.exp(-t * 55));
-}
-
-/** Long low sine — the sub-bass weight under a drum and bass kick. */
-function sub(sr: number) {
-  let phase = 0;
-  return render(sr, 0.4, (t) => {
-    const freq = 46 + 18 * Math.exp(-t * 20);
-    phase += (2 * Math.PI * freq) / sr;
-    return 0.22 * Math.sin(phase) * Math.exp(-t * 7);
-  });
-}
-
 /** Noise with the low end removed (a one-pole high-pass), for cymbals. */
 function metallic(sr: number, seconds: number, decay: number, gain: number, seed: number) {
   const n = noise(seed);
@@ -63,19 +47,6 @@ function metallic(sr: number, seconds: number, decay: number, gain: number, seed
     prevOut = 0.85 * (prevOut + x - prevIn);
     prevIn = x;
     return gain * prevOut * Math.exp(-t * decay);
-  });
-}
-
-function clap(sr: number) {
-  const n = noise(7);
-  // Three quick bursts, like several hands clapping slightly apart.
-  return render(sr, 0.18, (t) => {
-    const burst = Math.max(
-      Math.exp(-t * 60),
-      Math.exp(-Math.max(0, t - 0.01) * 60),
-      Math.exp(-Math.max(0, t - 0.02) * 25),
-    );
-    return 0.4 * n() * burst * (t < 0.02 ? 0.7 : 1);
   });
 }
 
@@ -99,23 +70,11 @@ function drum(sr: number) {
   });
 }
 
-/** Short woodblock-like tick, as on a classic metronome. */
-function tick(sr: number, freq: number, gain: number) {
-  return render(sr, 0.04, (t) => gain * Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 120));
-}
-
 export function placeholderSamples(sampleRate: number): SampleBank {
   return {
     kick: [kick(sampleRate)],
     drum: [drum(sampleRate)],
     snare: [snare(sampleRate)],
-    ghost: [ghost(sampleRate)],
-    sub: [sub(sampleRate)],
     hat: [metallic(sampleRate, 0.06, 70, 0.25, 3)],
-    openhat: [metallic(sampleRate, 0.25, 14, 0.2, 4)],
-    ride: [metallic(sampleRate, 0.4, 9, 0.15, 5)],
-    clap: [clap(sampleRate)],
-    tick: [tick(sampleRate, 1000, 0.6)],
-    tickAccent: [tick(sampleRate, 1500, 0.8)],
   };
 }
