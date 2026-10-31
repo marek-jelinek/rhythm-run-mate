@@ -2,6 +2,7 @@ import { BPM_DEFAULT, clampBpm, stepBpm } from "./cadence";
 import { mixLoop, type SampleBank } from "./mix";
 import type { Pattern } from "./patterns";
 import { placeholderSamples } from "./placeholderSounds";
+import { loadSamples, withFallbacks } from "./sampleFiles";
 import { nextBeatAfter, positionAt, loopOffset, type Segment } from "./timeline";
 
 /** Delay between pressing Play and the first beat, so the start is never clipped. */
@@ -54,6 +55,8 @@ export class CadenceEngine {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private samples: SampleBank | null = null;
+  /** Resolves once the recorded samples are decoded (or have fallen back to placeholders). */
+  private samplesReady: Promise<void> | null = null;
   private segments: PlayingSegment[] = [];
   private loopCache = new Map<string, Loop>();
   private _playing = false;
@@ -86,6 +89,7 @@ export class CadenceEngine {
     this._playing = true;
     const ctx = this.ensureContext();
     await ctx.resume();
+    await this.samplesReady;
     if (!this._playing || this.segments.length > 0) return; // stopped or started meanwhile
     this.segments = [this.startSegment(ctx.currentTime + START_DELAY, 0)];
   }
@@ -175,7 +179,11 @@ export class CadenceEngine {
     master.connect(ctx.destination);
     this.ctx = ctx;
     this.master = master;
-    this.samples = placeholderSamples(ctx.sampleRate);
+    this.samples = withFallbacks(placeholderSamples(ctx.sampleRate));
+    this.samplesReady = loadSamples(ctx, this.samples).then((bank) => {
+      this.samples = bank;
+      this.loopCache.clear(); // loops mixed so far used the placeholders
+    });
     ctx.addEventListener("statechange", this.recover);
     document.addEventListener("visibilitychange", this.recover);
     return ctx;

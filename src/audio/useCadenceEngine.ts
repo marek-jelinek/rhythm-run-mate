@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { BPM_DEFAULT, stepBpm } from "./cadence";
 import { CadenceEngine, type EnginePosition } from "./engine";
 import type { Pattern } from "./patterns";
+import { fetchSampleFiles } from "./sampleFiles";
 
 /**
  * Connects React UI to the audio engine. The engine is created on first use
@@ -31,6 +32,11 @@ export function useCadenceEngine(patterns: readonly Pattern[]) {
     }
     return engineRef.current;
   }, [patterns, patternId, volume]);
+
+  // Start downloading the drum samples now, so they're ready when Play is pressed.
+  useEffect(() => {
+    void fetchSampleFiles();
+  }, []);
 
   useEffect(
     () => () => {

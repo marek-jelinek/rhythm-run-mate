@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mixLoop, validatePattern, type SampleBank } from "./mix";
 import { PLACEHOLDER_PATTERNS, beatsInPattern, type Pattern } from "./patterns";
 import { placeholderSamples } from "./placeholderSounds";
+import { SAMPLE_FILES, withFallbacks } from "./sampleFiles";
 
 // 44100 Hz at 175 BPM: one beat = 15120 samples, easy to check by hand.
 const SR = 44100;
@@ -68,7 +69,8 @@ describe("placeholder tracks", () => {
       "Punk",
       "Metal",
     ]);
-    const samples = placeholderSamples(SR);
+    // Recorded samples stand in as their placeholders here (no browser to decode them).
+    const samples = withFallbacks(placeholderSamples(SR));
     for (const p of PLACEHOLDER_PATTERNS) {
       const loop = mixLoop(p, samples, BPM, SR);
       // One onset per beat. Most tracks are a single bar; Electro is a long
@@ -77,5 +79,12 @@ describe("placeholder tracks", () => {
       for (const ch of loop.channels)
         expect(ch.every((v) => Number.isFinite(v) && Math.abs(v) <= 0.9801)).toBe(true);
     }
+  });
+});
+
+describe("sample files", () => {
+  it("every recorded sample has a playable stand-in", () => {
+    const bank = withFallbacks(placeholderSamples(SR));
+    for (const name of Object.keys(SAMPLE_FILES)) expect(bank[name]![0]!.length).toBeGreaterThan(0);
   });
 });

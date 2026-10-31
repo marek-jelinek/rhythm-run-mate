@@ -29,6 +29,31 @@ const S = "snare";
 const H = "hat";
 const D = "drum";
 
+const RK = "rock_kick";
+const RS = "rock_snare";
+const RR = "rock_ride";
+const RC = "rock_crash";
+
+/**
+ * One bar of the rock groove in sixteenths (0 = beat 1, 4 = beat 2, …):
+ * snare on 2 and 4, a cymbal on every beat (`opening` on beat 1), and the
+ * kick on the given sixteenths.
+ */
+function rockBar(kicks: number[], opening = RR): Step[] {
+  return Array.from({ length: 16 }, (_, i) => {
+    const hits: string[] = [];
+    if (kicks.includes(i)) hits.push(RK);
+    if (i === 4 || i === 12) hits.push(RS);
+    if (i % 4 === 0) hits.push(i === 0 ? opening : RR);
+    return hits.length > 0 ? hits : null;
+  });
+}
+
+// Kick figures transcribed from the reference drum stem (see Sound/rozbor-emptiness-machine.md).
+const ROCK_A = [0, 10, 14]; // 1, 3-and, 4-and
+const ROCK_B = [2, 8]; // 1-and, 3
+const ROCK_B2 = [2, 8, 10]; // 1-and, 3, 3-and
+
 export const PLACEHOLDER_PATTERNS: readonly Pattern[] = [
   {
     id: "basic",
@@ -47,8 +72,20 @@ export const PLACEHOLDER_PATTERNS: readonly Pattern[] = [
   {
     id: "rock",
     name: "Rock",
-    stepsPerBeat: 2,
-    sequence: [[K, H], H, [S, H], [K, H], [K, H], H, [S, H], H],
+    // Recorded kit (see sampleFiles.ts) playing the 8-bar groove of the
+    // reference stem: a syncopated two-bar kick figure, a variation in bar 4,
+    // and a crash opening the phrase.
+    stepsPerBeat: 4,
+    sequence: [
+      rockBar(ROCK_A, RC),
+      rockBar(ROCK_B),
+      rockBar(ROCK_A),
+      rockBar(ROCK_B2),
+      rockBar(ROCK_A),
+      rockBar(ROCK_B),
+      rockBar(ROCK_A),
+      rockBar(ROCK_B),
+    ].flat(),
   },
   {
     id: "punk",
