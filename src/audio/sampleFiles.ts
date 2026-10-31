@@ -10,6 +10,7 @@ export const SAMPLE_FILES: Record<string, { url: string; fallback: string | null
   rock_snare: { url: "/sounds/rock/snare.wav", fallback: "snare" },
   rock_ride: { url: "/sounds/rock/ride.wav", fallback: "hat" },
   rock_crash: { url: "/sounds/rock/crash.wav", fallback: "hat" },
+  rock_tom: { url: "/sounds/rock/tom.wav", fallback: "drum" },
 };
 
 const SILENCE = [new Float32Array(1)];

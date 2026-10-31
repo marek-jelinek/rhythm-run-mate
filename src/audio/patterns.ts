@@ -33,6 +33,7 @@ const RK = "rock_kick";
 const RS = "rock_snare";
 const RR = "rock_ride";
 const RC = "rock_crash";
+const RT = "rock_tom";
 
 /**
  * One bar of the rock groove in sixteenths (0 = beat 1, 4 = beat 2, …):
@@ -54,6 +55,16 @@ const ROCK_A = [0, 10, 14]; // 1, 3-and, 4-and
 const ROCK_B = [2, 8]; // 1-and, 3
 const ROCK_B2 = [2, 8, 10]; // 1-and, 3, 3-and
 
+/**
+ * Last bar of the phrase: the kick figure of the even bars, then the
+ * cymbals stop and a fill (tom, then snare) leads back into the crash.
+ */
+// prettier-ignore
+const ROCK_FILL: Step[] = [
+  RR,       null, RK,   null, [RS, RR], null, RK,   null,
+  RK,       null, RT,   RS,   RS,       null, RS,   null,
+];
+
 export const PLACEHOLDER_PATTERNS: readonly Pattern[] = [
   {
     id: "basic",
@@ -74,7 +85,7 @@ export const PLACEHOLDER_PATTERNS: readonly Pattern[] = [
     name: "Rock",
     // Recorded kit (see sampleFiles.ts) playing the 8-bar groove of the
     // reference stem: a syncopated two-bar kick figure, a variation in bar 4,
-    // and a crash opening the phrase.
+    // a fill in bar 8, and a crash opening the phrase.
     stepsPerBeat: 4,
     sequence: [
       rockBar(ROCK_A, RC),
@@ -84,7 +95,7 @@ export const PLACEHOLDER_PATTERNS: readonly Pattern[] = [
       rockBar(ROCK_A),
       rockBar(ROCK_B),
       rockBar(ROCK_A),
-      rockBar(ROCK_B),
+      ROCK_FILL,
     ].flat(),
   },
   {
